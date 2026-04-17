@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import app.krafted.chicktapfrenzy.data.db.AppDatabase
 import app.krafted.chicktapfrenzy.data.db.ScoreEntity
+import app.krafted.chicktapfrenzy.game.GameSession
+import app.krafted.chicktapfrenzy.game.GameSessionSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,6 +16,8 @@ import kotlinx.coroutines.launch
 class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getInstance(application).scoreDao()
+    private val gameSession = GameSession()
+    private var hasPersistedCurrentGame = false
 
     private val _uiState = MutableStateFlow(GameUiState())
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -24,37 +28,77 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _uiState.update { it.copy(highScore = max ?: 0) }
             }
         }
+
+        syncSessionState(gameSession.snapshot())
+    }
+
+    fun tickGame(deltaSeconds: Float) {
+        val snapshot = gameSession.tick(deltaSeconds)
+        syncSessionState(snapshot)
+        persistGameOverIfNeeded(snapshot)
     }
 
     fun onHoleTapped(holeIndex: Int) {
-        if (holeIndex < 0) return
-        // TODO B2: score/lives deltas, golden bonus, fox penalty
+        val snapshot = gameSession.onHoleTapped(holeIndex)
+        syncSessionState(snapshot)
+        persistGameOverIfNeeded(snapshot)
     }
 
     fun onCharacterMissed(holeIndex: Int) {
-        if (holeIndex < 0) return
-        // TODO B2: missed-chick life penalty
+        val snapshot = gameSession.onCharacterMissed(holeIndex)
+        syncSessionState(snapshot)
+        persistGameOverIfNeeded(snapshot)
     }
 
     fun startGame() {
+        hasPersistedCurrentGame = false
+        val snapshot = gameSession.reset()
         _uiState.update { current ->
             current.copy(
-                score = 0,
-                lives = 3,
-                round = 1,
-                roundTimeRemaining = 30f,
+                score = snapshot.score,
+                lives = snapshot.lives,
+                round = snapshot.round,
+                roundTimeRemaining = snapshot.roundTimeRemaining,
                 isGameOver = false,
-                isRoundComplete = false,
-                isNewHighScore = false
+                isRoundComplete = snapshot.isRoundComplete,
+                isNewHighScore = false,
+                holes = snapshot.holes,
+                scoreFloats = snapshot.scoreFloats
             )
         }
-        // TODO B1: kick GameThread
     }
 
     fun endGame() {
-        val finalScore = uiState.value.score
+        val snapshot = gameSession.endGame()
+        syncSessionState(snapshot)
+        persistGameOverIfNeeded(snapshot)
+    }
+
+    private fun syncSessionState(snapshot: GameSessionSnapshot) {
+        _uiState.update { current ->
+            current.copy(
+                score = snapshot.score,
+                lives = snapshot.lives,
+                round = snapshot.round,
+                roundTimeRemaining = snapshot.roundTimeRemaining,
+                isGameOver = current.isGameOver || snapshot.isGameOver,
+                isRoundComplete = snapshot.isRoundComplete,
+                holes = snapshot.holes,
+                scoreFloats = snapshot.scoreFloats
+            )
+        }
+    }
+
+    private fun persistGameOverIfNeeded(snapshot: GameSessionSnapshot) {
+        if (!snapshot.isGameOver || hasPersistedCurrentGame) {
+            return
+        }
+
+        hasPersistedCurrentGame = true
+        val finalScore = snapshot.score
         val currentHighScore = uiState.value.highScore
 
+        _uiState.update { it.copy(isGameOver = true) }
         viewModelScope.launch {
             val previousHighScore = dao.getHighScoreOnce() ?: 0
             dao.insertScore(ScoreEntity(score = finalScore))
