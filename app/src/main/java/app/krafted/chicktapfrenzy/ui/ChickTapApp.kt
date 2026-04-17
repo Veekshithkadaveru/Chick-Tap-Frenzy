@@ -39,6 +39,8 @@ fun ChickTapApp(gameViewModel: GameViewModel = viewModel()) {
         composable(ChickTapRoutes.Game) {
             GameScreen(
                 uiState = uiState,
+                onTick = { delta -> gameViewModel.tickGame(delta) },
+                onHoleTapped = { holeIndex -> gameViewModel.onHoleTapped(holeIndex) },
                 onEndGame = {
                     gameViewModel.endGame()
                     navController.navigate(ChickTapRoutes.GameOver) {
