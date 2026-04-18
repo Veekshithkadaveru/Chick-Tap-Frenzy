@@ -1,6 +1,6 @@
 package app.krafted.chicktapfrenzy.game
 
-enum class HolePhase { EMPTY, RISING, VISIBLE, FALLING }
+enum class HolePhase { EMPTY, RISING, VISIBLE, FALLING, SQUISHED }
 
 class HoleState {
 
@@ -26,6 +26,7 @@ class HoleState {
             HolePhase.RISING -> progress.coerceIn(0f, 1f)
             HolePhase.VISIBLE -> 1f
             HolePhase.FALLING -> (1f - progress).coerceIn(0f, 1f)
+            HolePhase.SQUISHED -> 1f
         }
 
     val isTappable: Boolean
@@ -47,7 +48,7 @@ class HoleState {
     }
 
     fun markTapped() {
-        phase = HolePhase.FALLING
+        phase = HolePhase.SQUISHED
         progress = 0f
     }
 
@@ -86,6 +87,7 @@ class HoleState {
         HolePhase.RISING -> riseDurationSec
         HolePhase.VISIBLE -> visibleDurationSec
         HolePhase.FALLING -> fallDurationSec
+        HolePhase.SQUISHED -> SQUISH_DURATION_SEC
         HolePhase.EMPTY -> 0f
     }
 
@@ -108,6 +110,11 @@ class HoleState {
                 characterId = 0
             }
 
+            HolePhase.SQUISHED -> {
+                phase = HolePhase.FALLING
+                progress = 0f
+            }
+
             HolePhase.EMPTY -> Unit
         }
     }
@@ -116,5 +123,6 @@ class HoleState {
         const val DEFAULT_RISE_SEC: Float = 0.25f
         const val DEFAULT_VISIBLE_SEC: Float = 1.0f
         const val DEFAULT_FALL_SEC: Float = 0.25f
+        const val SQUISH_DURATION_SEC: Float = 0.25f
     }
 }

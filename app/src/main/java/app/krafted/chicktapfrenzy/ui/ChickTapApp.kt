@@ -53,6 +53,9 @@ fun ChickTapApp(gameViewModel: GameViewModel = viewModel()) {
                         launchSingleTop = true
                         popUpTo(ChickTapRoutes.Home) { inclusive = true }
                     }
+                },
+                onStartNextRound = {
+                    gameViewModel.startNextRound()
                 }
             )
         }

@@ -32,7 +32,7 @@ data class ScoreFloat(
     }
 
     companion object {
-        const val DEFAULT_DURATION_SEC: Float = 0.9f
+        const val DEFAULT_DURATION_SEC: Float = 1.0f
         const val MAX_RISE_OFFSET: Float = 48f
     }
 }

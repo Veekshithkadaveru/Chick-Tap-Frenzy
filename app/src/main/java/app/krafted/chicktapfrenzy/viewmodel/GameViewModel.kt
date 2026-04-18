@@ -17,6 +17,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val dao = AppDatabase.getInstance(application).scoreDao()
     private val gameSession = GameSession()
+    private val sessionLock = Any()
     private var hasPersistedCurrentGame = false
 
     private val _uiState = MutableStateFlow(GameUiState())
@@ -33,31 +34,32 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun tickGame(deltaSeconds: Float) {
-        val snapshot = gameSession.tick(deltaSeconds)
+        val snapshot = synchronized(sessionLock) { gameSession.tick(deltaSeconds) }
         syncSessionState(snapshot)
         persistGameOverIfNeeded(snapshot)
     }
 
     fun onHoleTapped(holeIndex: Int) {
-        val snapshot = gameSession.onHoleTapped(holeIndex)
+        val snapshot = synchronized(sessionLock) { gameSession.onHoleTapped(holeIndex) }
         syncSessionState(snapshot)
         persistGameOverIfNeeded(snapshot)
     }
 
     fun onCharacterMissed(holeIndex: Int) {
-        val snapshot = gameSession.onCharacterMissed(holeIndex)
+        val snapshot = synchronized(sessionLock) { gameSession.onCharacterMissed(holeIndex) }
         syncSessionState(snapshot)
         persistGameOverIfNeeded(snapshot)
     }
 
     fun startGame() {
         hasPersistedCurrentGame = false
-        val snapshot = gameSession.reset()
+        val snapshot = synchronized(sessionLock) { gameSession.reset() }
         _uiState.update { current ->
             current.copy(
                 score = snapshot.score,
                 lives = snapshot.lives,
                 round = snapshot.round,
+                backgroundIndex = snapshot.backgroundIndex,
                 roundTimeRemaining = snapshot.roundTimeRemaining,
                 isGameOver = false,
                 isRoundComplete = snapshot.isRoundComplete,
@@ -68,8 +70,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun startNextRound() {
+        val snapshot = synchronized(sessionLock) { gameSession.startNextRound() }
+        syncSessionState(snapshot)
+    }
+
     fun endGame() {
-        val snapshot = gameSession.endGame()
+        val snapshot = synchronized(sessionLock) { gameSession.endGame() }
         syncSessionState(snapshot)
         persistGameOverIfNeeded(snapshot)
     }
@@ -80,6 +87,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 score = snapshot.score,
                 lives = snapshot.lives,
                 round = snapshot.round,
+                backgroundIndex = snapshot.backgroundIndex,
                 roundTimeRemaining = snapshot.roundTimeRemaining,
                 isGameOver = current.isGameOver || snapshot.isGameOver,
                 isRoundComplete = snapshot.isRoundComplete,

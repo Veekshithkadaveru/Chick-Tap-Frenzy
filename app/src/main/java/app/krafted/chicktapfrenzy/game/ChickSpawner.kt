@@ -1,5 +1,6 @@
 package app.krafted.chicktapfrenzy.game
 
+import kotlin.math.pow
 import kotlin.random.Random
 
 class ChickSpawner(
@@ -13,24 +14,41 @@ class ChickSpawner(
 
     fun tick(
         deltaSeconds: Float,
-        round: Int,
+        score: Int,
         emptyHoleIndices: List<Int>
-    ): SpawnEvent? {
-        if (deltaSeconds <= 0f) return null
+    ): List<SpawnEvent> {
+        if (deltaSeconds <= 0f) return emptyList()
 
-        val profile = profileForRound(round)
+        val profile = profileForScore(score)
         accumulatedSpawnSec += deltaSeconds
-        if (accumulatedSpawnSec < profile.spawnGapSec) return null
+        if (accumulatedSpawnSec < profile.spawnGapSec) return emptyList()
 
         accumulatedSpawnSec -= profile.spawnGapSec
-        if (emptyHoleIndices.isEmpty()) return null
+        if (emptyHoleIndices.isEmpty()) return emptyList()
 
-        val holeIndex = emptyHoleIndices[random.nextInt(emptyHoleIndices.size)]
-        val chickType = rollChickType(round)
-        return SpawnEvent(
-            holeIndex = holeIndex,
-            chickType = chickType,
-            profile = profile
+        val spawnCount = when {
+            score > 40 && emptyHoleIndices.size >= 3 && random.nextFloat() < 0.10f -> 3
+            score > 15 && emptyHoleIndices.size >= 2 && random.nextFloat() < 0.20f -> 2
+            else -> 1
+        }
+        val chosenHoles = emptyHoleIndices.shuffled(random).take(spawnCount)
+        return chosenHoles.map { holeIndex ->
+            SpawnEvent(
+                holeIndex = holeIndex,
+                chickType = rollChickType(score),
+                profile = profile
+            )
+        }
+    }
+
+    fun profileForScore(score: Int): SpawnProfile {
+        val tier = score / 10
+        val scale = 0.95f.pow(tier)
+        return SpawnProfile(
+            riseSec = 0.25f,
+            visibleSec = (1.10f * scale).coerceAtLeast(0.60f),
+            fallSec = 0.25f,
+            spawnGapSec = (0.95f * scale).coerceAtLeast(0.40f)
         )
     }
 
@@ -44,27 +62,18 @@ class ChickSpawner(
         )
     }
 
-    fun spawnWeightsForRound(round: Int): Map<ChickType, Int> {
-        val safeRound = round.coerceAtLeast(1)
-        val foxWeight = if (safeRound <= 1) {
-            0
-        } else {
-            (4 + (3 * (safeRound - 2))).coerceAtMost(16)
-        }
-
+    fun spawnWeightsForScore(score: Int): Map<ChickType, Int> {
+        val foxWeight = if (score < 10) 0
+            else ((score - 10).toFloat() / 30f * 28f).toInt().coerceIn(0, 28)
         return linkedMapOf(
-            ChickType.COMMON_1 to 30,
-            ChickType.COMMON_2 to 24,
-            ChickType.COMMON_3 to 18,
-            ChickType.COMMON_4 to 12,
-            ChickType.SPRING to 8,
+            ChickType.CHICKEN to 80,
             ChickType.GOLDEN to 4,
             ChickType.FOX to foxWeight
         )
     }
 
-    private fun rollChickType(round: Int): ChickType {
-        val weights = spawnWeightsForRound(round)
+    private fun rollChickType(score: Int): ChickType {
+        val weights = spawnWeightsForScore(score)
         val totalWeight = weights.values.sum()
         val roll = random.nextInt(totalWeight)
         var cursor = 0
@@ -77,7 +86,7 @@ class ChickSpawner(
             }
         }
 
-        return ChickType.COMMON_1
+        return ChickType.CHICKEN
     }
 
     data class SpawnProfile(

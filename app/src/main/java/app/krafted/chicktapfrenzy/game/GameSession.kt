@@ -14,6 +14,7 @@ class GameSession(
     private var score: Int = 0
     private var lives: Int = STARTING_LIVES
     private var round: Int = 1
+    private var backgroundIndex: Int = 0
     private var roundTimeRemaining: Float = roundDurationSec
     private var isGameOver: Boolean = false
     private var isRoundComplete: Boolean = false
@@ -33,6 +34,7 @@ class GameSession(
         score = 0
         lives = STARTING_LIVES
         round = startingRound.coerceAtLeast(1)
+        backgroundIndex = 0
         roundTimeRemaining = roundDurationSec
         isGameOver = false
         isRoundComplete = false
@@ -51,9 +53,13 @@ class GameSession(
         scoreFloats.removeAll { it.isExpired }
 
         if (!isRoundComplete) {
-            roundTimeRemaining = (roundTimeRemaining - deltaSeconds).coerceAtLeast(0f)
+            roundTimeRemaining -= deltaSeconds
             if (roundTimeRemaining <= 0f) {
+                roundTimeRemaining = 0f
                 isRoundComplete = true
+                holeStates.forEach(HoleState::reset)
+                activeTypes.fill(null)
+                resolvedMisses.fill(false)
             }
         }
 
@@ -71,16 +77,23 @@ class GameSession(
         }
 
         if (!isGameOver && !isRoundComplete) {
-            val spawnEvent = chickSpawner.tick(
+            val spawnEvents = chickSpawner.tick(
                 deltaSeconds = deltaSeconds,
-                round = round,
+                score = score,
                 emptyHoleIndices = emptyHoleIndices()
             )
-            if (spawnEvent != null) {
-                spawn(spawnEvent)
-            }
+            spawnEvents.forEach { spawn(it) }
         }
 
+        return snapshot()
+    }
+
+    fun startNextRound(): GameSessionSnapshot {
+        round += 1
+        backgroundIndex = (backgroundIndex + 1) % 5
+        roundTimeRemaining = roundDurationSec
+        isRoundComplete = false
+        chickSpawner.reset()
         return snapshot()
     }
 
@@ -98,7 +111,7 @@ class GameSession(
         resolvedMisses[holeIndex] = true
         when (chickType) {
             ChickType.FOX -> {
-                loseLife(holeIndex, label = "-1 LIFE")
+                loseLife(holeIndex, label = "-1")
             }
 
             ChickType.GOLDEN -> {
@@ -138,6 +151,7 @@ class GameSession(
         score = score,
         lives = lives,
         round = round,
+        backgroundIndex = backgroundIndex,
         roundTimeRemaining = roundTimeRemaining,
         isGameOver = isGameOver,
         isRoundComplete = isRoundComplete,
@@ -189,7 +203,7 @@ class GameSession(
             return
         }
 
-        loseLife(holeIndex, label = "-1 LIFE")
+        loseLife(holeIndex, label = "-1")
         if (triggerFall && holeState.isTappable) {
             holeState.markTapped()
         }
@@ -237,6 +251,7 @@ data class GameSessionSnapshot(
     val score: Int,
     val lives: Int,
     val round: Int,
+    val backgroundIndex: Int,
     val roundTimeRemaining: Float,
     val isGameOver: Boolean,
     val isRoundComplete: Boolean,

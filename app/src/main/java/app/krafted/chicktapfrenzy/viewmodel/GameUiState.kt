@@ -8,6 +8,7 @@ data class GameUiState(
     val score: Int = 0,
     val lives: Int = 3,
     val round: Int = 1,
+    val backgroundIndex: Int = 0,
     val roundTimeRemaining: Float = 30f,
     val isGameOver: Boolean = false,
     val isRoundComplete: Boolean = false,
