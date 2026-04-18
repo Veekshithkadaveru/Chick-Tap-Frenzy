@@ -56,18 +56,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.krafted.chicktapfrenzy.R
+import app.krafted.chicktapfrenzy.ui.theme.ChickCream
+import app.krafted.chicktapfrenzy.ui.theme.ChickCreamDim
+import app.krafted.chicktapfrenzy.ui.theme.ChickInkShadow
+import app.krafted.chicktapfrenzy.ui.theme.ChickRed
+import app.krafted.chicktapfrenzy.ui.theme.ChickRedDark
+import app.krafted.chicktapfrenzy.ui.theme.ChickRedLight
+import app.krafted.chicktapfrenzy.ui.theme.ChickYellow
+import app.krafted.chicktapfrenzy.ui.theme.ChickYellowBright
+import app.krafted.chicktapfrenzy.ui.theme.ChickYellowSoft
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val BarnRed = Color(0xFFC0392B)
-private val BarnRedDark = Color(0xFF7A1E17)
-private val BarnRedLight = Color(0xFFE84C3D)
-private val SunYellow = Color(0xFFFFC93C)
-private val SunYellowSoft = Color(0xFFFFDD75)
-private val SunYellowBright = Color(0xFFFFF0A0)
-private val CreamWhite = Color(0xFFFFF8E7)
-private val InkShadow = Color(0xCC1A0F04)
-private val CreamDim = Color(0xB3FFF8E7)
 private val EaseOutBack = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
 
 @Composable
@@ -217,8 +217,8 @@ private fun HeroBadge(float: Float, haloAlpha: Float) {
         ) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    0f to SunYellowSoft.copy(alpha = 0.75f),
-                    0.6f to SunYellow.copy(alpha = 0.3f),
+                    0f to ChickYellowSoft.copy(alpha = 0.75f),
+                    0.6f to ChickYellow.copy(alpha = 0.3f),
                     1f to Color.Transparent
                 )
             )
@@ -228,19 +228,24 @@ private fun HeroBadge(float: Float, haloAlpha: Float) {
             modifier = Modifier
                 .size(210.dp)
                 .graphicsLayer { translationY = float }
-                .shadow(elevation = 22.dp, shape = CircleShape, ambientColor = Color.Black, spotColor = Color.Black)
+                .shadow(
+                    elevation = 22.dp,
+                    shape = CircleShape,
+                    ambientColor = Color.Black,
+                    spotColor = Color.Black
+                )
                 .clip(CircleShape)
                 .background(
                     Brush.verticalGradient(
-                        0f to CreamWhite,
+                        0f to ChickCream,
                         1f to Color(0xFFF3E6C4)
                     )
                 )
                 .border(
                     width = 3.dp,
                     brush = Brush.verticalGradient(
-                        0f to SunYellowSoft,
-                        1f to SunYellow
+                        0f to ChickYellowSoft,
+                        1f to ChickYellow
                     ),
                     shape = CircleShape
                 ),
@@ -273,14 +278,14 @@ private fun TitleBlock(
             text = "CHICK  TAP",
             style = TextStyle(
                 brush = Brush.horizontalGradient(
-                    colors = listOf(SunYellowSoft, CreamWhite, SunYellowSoft)
+                    colors = listOf(ChickYellowSoft, ChickCream, ChickYellowSoft)
                 ),
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 26.sp,
                 letterSpacing = 8.sp,
                 shadow = Shadow(
-                    color = InkShadow,
+                    color = ChickInkShadow,
                     offset = Offset(0f, 3f),
                     blurRadius = 8f
                 ),
@@ -295,14 +300,14 @@ private fun TitleBlock(
                 text = "FRENZY",
                 style = TextStyle(
                     brush = Brush.horizontalGradient(
-                        colors = listOf(SunYellow, SunYellowBright, SunYellow)
+                        colors = listOf(ChickYellow, ChickYellowBright, ChickYellow)
                     ),
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight.Black,
                     fontSize = 58.sp,
                     letterSpacing = 4.sp,
                     shadow = Shadow(
-                        color = BarnRedDark,
+                        color = ChickRedDark,
                         offset = Offset(0f, 6f),
                         blurRadius = 16f
                     ),
@@ -338,7 +343,7 @@ private fun TitleBlock(
                 fontFamily = FontFamily.SansSerif,
                 fontWeight = FontWeight.Medium,
                 fontSize = 13.sp,
-                color = CreamDim,
+                color = ChickCreamDim,
                 letterSpacing = 2.sp,
                 textAlign = TextAlign.Center
             )
@@ -367,13 +372,13 @@ private fun PlayButton(
                 .shadow(
                     elevation = 16.dp,
                     shape = RoundedCornerShape(34.dp),
-                    ambientColor = BarnRedDark,
-                    spotColor = BarnRedDark
+                    ambientColor = ChickRedDark,
+                    spotColor = ChickRedDark
                 )
                 .clip(RoundedCornerShape(34.dp))
                 .background(
                     Brush.horizontalGradient(
-                        colors = listOf(BarnRedDark, BarnRed, BarnRedLight)
+                        colors = listOf(ChickRedDark, ChickRed, ChickRedLight)
                     )
                 )
                 .drawWithContent {
@@ -403,7 +408,7 @@ private fun PlayButton(
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp,
-                    color = CreamWhite,
+                    color = ChickCream,
                     letterSpacing = 10.sp
                 )
             )
@@ -427,7 +432,7 @@ private fun BestScoreRow(highScore: Int, alpha: Float) {
                     fontFamily = FontFamily.SansSerif,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 11.sp,
-                    color = CreamDim,
+                    color = ChickCreamDim,
                     letterSpacing = 4.sp
                 )
             )
@@ -436,14 +441,14 @@ private fun BestScoreRow(highScore: Int, alpha: Float) {
                 text = highScore.toString().padStart(4, '0'),
                 style = TextStyle(
                     brush = Brush.horizontalGradient(
-                        colors = listOf(SunYellow, SunYellowBright, SunYellow)
+                        colors = listOf(ChickYellow, ChickYellowBright, ChickYellow)
                     ),
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp,
                     letterSpacing = 4.sp,
                     shadow = Shadow(
-                        color = InkShadow,
+                        color = ChickInkShadow,
                         offset = Offset(0f, 2f),
                         blurRadius = 6f
                     )
@@ -464,7 +469,7 @@ private fun Divider(modifier: Modifier = Modifier) {
                 Brush.horizontalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        CreamWhite.copy(alpha = 0.45f),
+                        ChickCream.copy(alpha = 0.45f),
                         Color.Transparent
                     )
                 )
