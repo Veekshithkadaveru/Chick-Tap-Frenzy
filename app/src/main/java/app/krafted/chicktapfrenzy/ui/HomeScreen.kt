@@ -137,12 +137,27 @@ fun HomeScreen(
         ),
         label = "btn_shimmer"
     )
+    val backgroundOffset by idle.animateFloat(
+        initialValue = 0f,
+        targetValue = -300f,
+        animationSpec = infiniteRepeatable(
+            tween(30000, easing = LinearEasing), RepeatMode.Reverse
+        ),
+        label = "bg_offset"
+    )
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.chickag6_back_1),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    scaleX = 1.3f
+                    scaleY = 1.3f
+                    translationX = backgroundOffset
+                }
         )
         Box(
             modifier = Modifier

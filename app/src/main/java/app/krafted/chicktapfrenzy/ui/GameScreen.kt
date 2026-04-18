@@ -2,6 +2,7 @@ package app.krafted.chicktapfrenzy.ui
 
 import android.annotation.SuppressLint
 import android.view.MotionEvent
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -80,9 +81,12 @@ fun GameScreen(
     onTick: (Float) -> Unit,
     onHoleTapped: (Int) -> Unit,
     onEndGame: () -> Unit,
-    onExitToHome: () -> Unit,
     onStartNextRound: () -> Unit
 ) {
+    BackHandler(enabled = !uiState.isGameOver) {
+        onEndGame()
+    }
+
     val context = LocalContext.current
     val gameView = remember { ChickGameView(context) }
 
@@ -135,9 +139,6 @@ fun GameScreen(
                 gameView.apply {
                     setOnTick { delta ->
                         onTick(delta)
-                    }
-                    setOnHoleTapped { holeIndex ->
-                        onHoleTapped(holeIndex)
                     }
                     setOnTouchListener { _, event ->
                         if (event.action == MotionEvent.ACTION_DOWN) {

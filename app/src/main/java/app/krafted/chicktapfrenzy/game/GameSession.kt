@@ -80,6 +80,7 @@ class GameSession(
             val spawnEvents = chickSpawner.tick(
                 deltaSeconds = deltaSeconds,
                 score = score,
+                round = round,
                 emptyHoleIndices = emptyHoleIndices()
             )
             spawnEvents.forEach { spawn(it) }

@@ -15,11 +15,19 @@ class ChickSpawner(
     fun tick(
         deltaSeconds: Float,
         score: Int,
+        round: Int,
         emptyHoleIndices: List<Int>
     ): List<SpawnEvent> {
         if (deltaSeconds <= 0f) return emptyList()
 
-        val profile = profileForScore(score)
+        val scoreProfile = profileForScore(score)
+        val roundProfile = profileForRound(round)
+        val profile = SpawnProfile(
+            riseSec = 0.25f,
+            visibleSec = minOf(scoreProfile.visibleSec, roundProfile.visibleSec),
+            fallSec = 0.25f,
+            spawnGapSec = minOf(scoreProfile.spawnGapSec, roundProfile.spawnGapSec)
+        )
         accumulatedSpawnSec += deltaSeconds
         if (accumulatedSpawnSec < profile.spawnGapSec) return emptyList()
 

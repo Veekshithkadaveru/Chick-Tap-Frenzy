@@ -91,6 +91,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 roundTimeRemaining = snapshot.roundTimeRemaining,
                 isGameOver = current.isGameOver || snapshot.isGameOver,
                 isRoundComplete = snapshot.isRoundComplete,
+                currentCombo = snapshot.currentCombo,
                 holes = snapshot.holes,
                 scoreFloats = snapshot.scoreFloats
             )

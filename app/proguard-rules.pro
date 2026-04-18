@@ -19,3 +19,19 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Room
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Entity class *
+-keep @androidx.room.Dao class *
+-keepclassmembers class * extends androidx.room.RoomDatabase {
+    abstract *;
+}
+
+# Kotlin coroutines and serialization used by Room
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+
+# Jetpack Navigation
+-keep class androidx.navigation.** { *; }
+-keepnames class * extends androidx.lifecycle.ViewModel

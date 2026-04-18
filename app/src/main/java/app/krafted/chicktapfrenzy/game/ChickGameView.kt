@@ -365,7 +365,6 @@ class ChickGameView @JvmOverloads constructor(
             val drawY = baseY - sf.riseOffset * resources.displayMetrics.density
 
             scoreFloatPaint.textSize = SCORE_FLOAT_TEXT_SIZE * resources.displayMetrics.density
-            scoreFloatPaint.alpha = (sf.alpha * 255).toInt().coerceIn(0, 255)
             scoreFloatPaint.color = when (sf.tone) {
                 ScoreFloatTone.POSITIVE -> Color.WHITE
                 ScoreFloatTone.BONUS -> Color.rgb(255, 215, 0)
