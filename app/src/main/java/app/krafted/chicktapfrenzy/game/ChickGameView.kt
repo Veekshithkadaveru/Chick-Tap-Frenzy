@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import app.krafted.chicktapfrenzy.R
@@ -55,6 +56,17 @@ class ChickGameView @JvmOverloads constructor(
         style = Paint.Style.FILL
         color = Color.argb(40, 0, 0, 0)
     }
+    private val timerBackgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 12f
+        strokeCap = Paint.Cap.ROUND
+        color = Color.argb(80, 200, 200, 200)
+    }
+    private val timerForegroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 12f
+        strokeCap = Paint.Cap.ROUND
+    }
     private val clipPath = Path()
 
     init {
@@ -94,6 +106,23 @@ class ChickGameView @JvmOverloads constructor(
             }
         }
         return -1
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.action == MotionEvent.ACTION_DOWN) {
+            val holeIndex = checkHoleTap(event.x, event.y)
+            if (holeIndex != -1) {
+                onHoleTapped?.invoke(holeIndex)
+            }
+            performClick()
+            return true
+        }
+        return super.onTouchEvent(event)
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
+        return true
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -148,6 +177,7 @@ class ChickGameView @JvmOverloads constructor(
 
         for (hole in currentSnapshot.holes) {
             drawHole(canvas, hole)
+            drawTimerArc(canvas, hole)
         }
 
         drawScoreFloats(canvas, currentSnapshot.scoreFloats)
@@ -235,6 +265,32 @@ class ChickGameView @JvmOverloads constructor(
             centerY + holeRadiusY * 0.5f,
             holeRimPaint
         )
+    }
+
+    private fun drawTimerArc(canvas: Canvas, hole: HoleSnapshot) {
+        if (hole.phase != HolePhase.VISIBLE) return
+
+        val centerX = holeCenterXs[hole.holeIndex]
+        val centerY = holeCenterYs[hole.holeIndex]
+
+        val arcPadding = 20f
+        val arcRect = RectF(
+            centerX - holeRadiusX - arcPadding,
+            centerY - holeRadiusY * 0.35f - arcPadding,
+            centerX + holeRadiusX + arcPadding,
+            centerY + holeRadiusY * 0.5f + arcPadding
+        )
+
+        canvas.drawArc(arcRect, -90f, 360f, false, timerBackgroundPaint)
+
+        val sweepAngle = (1f - hole.progress) * 360f
+        if (hole.chickType?.isHazard == true) {
+            timerForegroundPaint.color = Color.rgb(255, 60, 60)
+        } else {
+            timerForegroundPaint.color = Color.rgb(60, 255, 60)
+        }
+
+        canvas.drawArc(arcRect, -90f, sweepAngle, false, timerForegroundPaint)
     }
 
     private fun drawScoreFloats(canvas: Canvas, floats: List<ScoreFloat>) {

@@ -145,6 +145,7 @@ class GameSession(
             HoleSnapshot(
                 holeIndex = holeIndex,
                 phase = holeState.phase,
+                progress = holeState.progress,
                 popOffset = holeState.popOffset,
                 isTappable = holeState.isTappable,
                 chickType = activeTypes[holeIndex]
