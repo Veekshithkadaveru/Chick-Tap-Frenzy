@@ -29,6 +29,9 @@ class ChickGameView @JvmOverloads constructor(
     private val backgroundBitmaps = mutableListOf<Bitmap>()
     private var currentBackgroundIndex: Int = 1
 
+    private var holeBitmap: Bitmap? = null
+    private var scaledHoleBitmap: Bitmap? = null
+
     private var snapshot: GameSessionSnapshot? = null
     private val snapshotLock = Any()
 
@@ -182,11 +185,11 @@ class ChickGameView @JvmOverloads constructor(
         if (!gridReady) return
 
         for (hole in currentSnapshot.holes) {
-            drawCharacter(canvas, hole)
+            drawHole(canvas, hole)
         }
 
         for (hole in currentSnapshot.holes) {
-            drawHole(canvas, hole)
+            drawCharacter(canvas, hole)
             drawTimerArc(canvas, hole)
         }
 
@@ -279,8 +282,9 @@ class ChickGameView @JvmOverloads constructor(
         )
         canvas.clipPath(clipPath)
 
+        val goldenSinkOffset = if (hole.chickType == ChickType.GOLDEN) 15f else 0f
         val charLeft = centerX - charDrawSize / 2f
-        val charTop = centerY - yShift
+        val charTop = centerY - yShift + goldenSinkOffset
         val charRight = centerX + charDrawSize / 2f
         val charBottom = charTop + charDrawSize
         val destRect = RectF(charLeft, charTop, charRight, charBottom)
@@ -298,31 +302,38 @@ class ChickGameView @JvmOverloads constructor(
         val rx = holeRadiusX
         val ry = holeRadiusY * 0.5f
 
-        canvas.drawOval(
-            centerX - rx - HOLE_SHADOW_OFFSET,
-            centerY - ry * 0.4f + HOLE_SHADOW_OFFSET,
-            centerX + rx + HOLE_SHADOW_OFFSET,
-            centerY + ry + HOLE_SHADOW_OFFSET,
-            holeShadowPaint
-        )
+        val bitmap = scaledHoleBitmap ?: holeBitmap
+        if (bitmap != null) {
+            val drawX = centerX - bitmap.width / 2f
+            val drawY = centerY - bitmap.height / 2f + ry * 0.3f
+            canvas.drawBitmap(bitmap, drawX, drawY, null)
+        } else {
+            canvas.drawOval(
+                centerX - rx - HOLE_SHADOW_OFFSET,
+                centerY - ry * 0.4f + HOLE_SHADOW_OFFSET,
+                centerX + rx + HOLE_SHADOW_OFFSET,
+                centerY + ry + HOLE_SHADOW_OFFSET,
+                holeShadowPaint
+            )
 
-        holePaint.color = HOLE_FILL_COLOR
-        canvas.drawOval(
-            centerX - rx,
-            centerY - ry * 0.4f,
-            centerX + rx,
-            centerY + ry,
-            holePaint
-        )
+            holePaint.color = HOLE_FILL_COLOR
+            canvas.drawOval(
+                centerX - rx,
+                centerY - ry * 0.4f,
+                centerX + rx,
+                centerY + ry,
+                holePaint
+            )
 
-        holeRimPaint.strokeWidth = (rx * 0.12f).coerceAtLeast(4f)
-        canvas.drawOval(
-            centerX - rx,
-            centerY - ry * 0.4f,
-            centerX + rx,
-            centerY + ry,
-            holeRimPaint
-        )
+            holeRimPaint.strokeWidth = (rx * 0.12f).coerceAtLeast(4f)
+            canvas.drawOval(
+                centerX - rx,
+                centerY - ry * 0.4f,
+                centerX + rx,
+                centerY + ry,
+                holeRimPaint
+            )
+        }
     }
 
     private fun drawTimerArc(canvas: Canvas, hole: HoleSnapshot) {
@@ -390,6 +401,13 @@ class ChickGameView @JvmOverloads constructor(
         holeRadiusY = holeRadiusX * HOLE_ASPECT_RATIO
         characterSize = holeRadiusX * CHARACTER_SIZE_FRACTION
 
+        holeBitmap?.let { bmp ->
+            val size = (holeRadiusX * 3.4f).toInt()
+            if (size > 0) {
+                scaledHoleBitmap = Bitmap.createScaledBitmap(bmp, size, size, true)
+            }
+        }
+
         for (row in 0 until rows) {
             for (col in 0 until cols) {
                 val index = row * cols + col
@@ -430,6 +448,11 @@ class ChickGameView @JvmOverloads constructor(
             if (bmp != null) {
                 backgroundBitmaps.add(bmp)
             }
+        }
+
+        val holeBmp = BitmapFactory.decodeResource(resources, R.drawable.hole_asset, opts)
+        if (holeBmp != null) {
+            holeBitmap = holeBmp
         }
     }
 

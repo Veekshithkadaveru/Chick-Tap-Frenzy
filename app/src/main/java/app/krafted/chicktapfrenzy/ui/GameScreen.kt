@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +53,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -97,6 +101,7 @@ fun GameScreen(
         gameView.updateSnapshot(
             GameSessionSnapshot(
                 score = uiState.score,
+                currentCombo = uiState.currentCombo,
                 lives = uiState.lives,
                 round = uiState.round,
                 backgroundIndex = uiState.backgroundIndex,
@@ -160,6 +165,13 @@ fun GameScreen(
             round = uiState.round,
             roundTimeRemaining = uiState.roundTimeRemaining,
             isGameOver = uiState.isGameOver
+        )
+
+        ComboOverlay(
+            combo = uiState.currentCombo,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 120.dp)
         )
 
         AnimatedVisibility(
@@ -521,6 +533,65 @@ private fun EggLife(filled: Boolean, justBroke: Boolean = false) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ComboOverlay(combo: Int, modifier: Modifier = Modifier) {
+    var displayedCombo by remember { mutableIntStateOf(3) }
+    if (combo >= 3) {
+        displayedCombo = combo
+    }
+
+    AnimatedVisibility(
+        visible = combo >= 3,
+        enter = fadeIn(tween(200)) + scaleIn(tween(400, easing = FastOutSlowInEasing), initialScale = 0.5f),
+        exit = fadeOut(tween(300)),
+        modifier = modifier
+    ) {
+        val infinitePulse = rememberInfiniteTransition(label = "combo_pulse")
+        val pulseScale by infinitePulse.animateFloat(
+            initialValue = 1f,
+            targetValue = 1.15f,
+            animationSpec = infiniteRepeatable(
+                tween(300, easing = FastOutSlowInEasing),
+                RepeatMode.Reverse
+            ),
+            label = "combo_scale"
+        )
+
+        Box(
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = pulseScale
+                    scaleY = pulseScale
+                    rotationZ = -5f
+                }
+                .shadow(16.dp, RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    Brush.linearGradient(
+                        listOf(Color(0xFFFF9800), Color(0xFFFF5722))
+                    )
+                )
+                .border(2.dp, Color(0xFFFFD700), RoundedCornerShape(16.dp))
+                .padding(horizontal = 24.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "COMBO x$displayedCombo!",
+                style = TextStyle(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White,
+                    shadow = Shadow(
+                        color = Color(0x99000000),
+                        offset = Offset(0f, 4f),
+                        blurRadius = 8f
+                    )
+                )
+            )
         }
     }
 }

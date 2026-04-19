@@ -12,6 +12,7 @@ class GameSession(
 
     private var nextScoreFloatId: Long = 1L
     private var score: Int = 0
+    private var currentCombo: Int = 0
     private var lives: Int = STARTING_LIVES
     private var round: Int = 1
     private var backgroundIndex: Int = 0
@@ -32,6 +33,7 @@ class GameSession(
 
         nextScoreFloatId = 1L
         score = 0
+        currentCombo = 0
         lives = STARTING_LIVES
         round = startingRound.coerceAtLeast(1)
         backgroundIndex = 0
@@ -112,23 +114,30 @@ class GameSession(
         resolvedMisses[holeIndex] = true
         when (chickType) {
             ChickType.FOX -> {
+                currentCombo = 0
                 loseLife(holeIndex, label = "-1")
             }
 
             ChickType.GOLDEN -> {
-                score += chickType.scoreValue
+                currentCombo++
+                val multiplier = if (currentCombo > 0) currentCombo else 1
+                val earned = chickType.scoreValue * multiplier
+                score += earned
                 scoreFloats += createScoreFloat(
                     holeIndex = holeIndex,
-                    label = "+${chickType.scoreValue}",
+                    label = "+$earned",
                     tone = ScoreFloatTone.BONUS
                 )
             }
 
             else -> {
-                score += chickType.scoreValue
+                currentCombo++
+                val multiplier = if (currentCombo > 0) currentCombo else 1
+                val earned = chickType.scoreValue * multiplier
+                score += earned
                 scoreFloats += createScoreFloat(
                     holeIndex = holeIndex,
-                    label = "+${chickType.scoreValue}",
+                    label = "+$earned",
                     tone = ScoreFloatTone.POSITIVE
                 )
             }
@@ -150,6 +159,7 @@ class GameSession(
 
     fun snapshot(): GameSessionSnapshot = GameSessionSnapshot(
         score = score,
+        currentCombo = currentCombo,
         lives = lives,
         round = round,
         backgroundIndex = backgroundIndex,
@@ -204,6 +214,7 @@ class GameSession(
             return
         }
 
+        currentCombo = 0
         loseLife(holeIndex, label = "-1")
         if (triggerFall && holeState.isTappable) {
             holeState.markTapped()
@@ -250,6 +261,7 @@ class GameSession(
 
 data class GameSessionSnapshot(
     val score: Int,
+    val currentCombo: Int,
     val lives: Int,
     val round: Int,
     val backgroundIndex: Int,
@@ -259,3 +271,5 @@ data class GameSessionSnapshot(
     val holes: List<HoleSnapshot>,
     val scoreFloats: List<ScoreFloat>
 )
+
+
