@@ -20,7 +20,7 @@ class ChickSpawner(
     ): List<SpawnEvent> {
         if (deltaSeconds <= 0f) return emptyList()
 
-        val scoreProfile = profileForScore(score)
+        val scoreProfile = profileForScore(score, round)
         val roundProfile = profileForRound(round)
         val profile = SpawnProfile(
             riseSec = 0.25f,
@@ -34,9 +34,10 @@ class ChickSpawner(
         accumulatedSpawnSec -= profile.spawnGapSec
         if (emptyHoleIndices.isEmpty()) return emptyList()
 
+        // Multi-spawn only unlocks in higher rounds so early game stays calm
         val spawnCount = when {
-            score > 40 && emptyHoleIndices.size >= 3 && random.nextFloat() < 0.10f -> 3
-            score > 15 && emptyHoleIndices.size >= 2 && random.nextFloat() < 0.20f -> 2
+            round >= 6 && emptyHoleIndices.size >= 3 && random.nextFloat() < 0.12f -> 3
+            round >= 3 && emptyHoleIndices.size >= 2 && random.nextFloat() < 0.22f -> 2
             else -> 1
         }
         val chosenHoles = emptyHoleIndices.shuffled(random).take(spawnCount)
@@ -49,24 +50,32 @@ class ChickSpawner(
         }
     }
 
-    fun profileForScore(score: Int): SpawnProfile {
-        val tier = score / 10
-        val scale = 0.95f.pow(tier)
+    // Score-based scaling is intentionally gentle so it doesn't outpace round difficulty
+    fun profileForScore(score: Int, round: Int = 1): SpawnProfile {
+        val tier = score / 15                               // ticks every 15 pts (was 10)
+        val scale = 0.97f.pow(tier)                        // 3 % per tier (was 5 %)
+        // Base limits are set by the round profile; score only tightens within that
+        val roundVisibleFloor = profileForRound(round).visibleSec
+        val roundGapFloor     = profileForRound(round).spawnGapSec
         return SpawnProfile(
             riseSec = 0.25f,
-            visibleSec = (1.10f * scale).coerceAtLeast(0.60f),
+            visibleSec = (roundVisibleFloor * scale).coerceAtLeast(roundVisibleFloor * 0.80f),
             fallSec = 0.25f,
-            spawnGapSec = (0.95f * scale).coerceAtLeast(0.40f)
+            spawnGapSec = (roundGapFloor * scale).coerceAtLeast(roundGapFloor * 0.80f)
         )
     }
 
     fun profileForRound(round: Int): SpawnProfile {
-        val safeRound = round.coerceAtLeast(1)
+        val r = round.coerceAtLeast(1)
+        // Round 1: very slow — chick stays 2.5 s, spawns every 1.8 s
+        // Each round: −0.20 s visible, −0.15 s gap, floored at 0.70 s / 0.45 s
+        val visibleSec  = (2.50f - (0.20f * (r - 1))).coerceAtLeast(0.70f)
+        val spawnGapSec = (1.80f - (0.15f * (r - 1))).coerceAtLeast(0.45f)
         return SpawnProfile(
             riseSec = 0.25f,
-            visibleSec = (1.10f - (0.06f * (safeRound - 1))).coerceAtLeast(0.70f),
+            visibleSec = visibleSec,
             fallSec = 0.25f,
-            spawnGapSec = (0.95f - (0.08f * (safeRound - 1))).coerceAtLeast(0.55f)
+            spawnGapSec = spawnGapSec
         )
     }
 
